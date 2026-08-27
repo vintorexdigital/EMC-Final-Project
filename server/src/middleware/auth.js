@@ -1,11 +1,18 @@
-import admin from 'firebase-admin';
+import { initializeApp, cert, applicationDefault } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
 let firebaseReady = false;
+let auth;
 if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
   try {
-    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)) });
+    auth = getAuth(initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)) }));
     firebaseReady = true;
   } catch (error) { console.error('Firebase Admin configuration failed:', error.message); }
+} else if (process.env.FIREBASE_PROJECT_ID) {
+  try {
+    auth = getAuth(initializeApp({ credential: applicationDefault(), projectId: process.env.FIREBASE_PROJECT_ID }));
+    firebaseReady = true;
+  } catch (error) { console.error('Firebase Admin ADC configuration failed:', error.message); }
 }
 
 export async function requireAuth(req, res, next) {
@@ -19,6 +26,6 @@ export async function requireAuth(req, res, next) {
     }
     return res.status(503).json({ message: 'Firebase Admin is not configured on the server.' });
   }
-  try { req.user = await admin.auth().verifyIdToken(token); next(); }
+  try { req.user = await auth.verifyIdToken(token); next(); }
   catch { res.status(401).json({ message: 'Invalid or expired authentication token.' }); }
 }
