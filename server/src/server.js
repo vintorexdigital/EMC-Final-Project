@@ -6,7 +6,7 @@ import { config } from './config.js';
 import projectRoutes from './routes/projects.js';
 
 const app = express();
-app.use(cors({ origin: config.clientOrigin }));
+app.use(cors({ origin: config.clientOrigins }));
 app.use(express.json());
 app.use(morgan('dev'));
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'peer-project-hub-api' }));
